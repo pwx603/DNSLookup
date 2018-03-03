@@ -129,6 +129,8 @@ public class DNSLookupService {
             } else if (commandArgs[0].equalsIgnoreCase("dump")) {
                 // DUMP: Print all results still cached
                 cache.forEachNode(DNSLookupService::printResults);
+            } else if (commandArgs[0].equalsIgnoreCase("debug")){  // For testing implementations
+                retrieveResultsFromServer(new DNSNode("www.ugrad.cs.ubc.ca", RecordType.A), rootServer);
             } else {
                 System.err.println("Invalid command. Valid commands are:");
                 System.err.println("\tlookup fqdn [type]");
