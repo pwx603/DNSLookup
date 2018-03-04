@@ -1,14 +1,13 @@
 package ca.ubc.cs.cs317.dnslookup;
-
 /** Record types supported by the application. Includes a few common record types that are not
  * fully supported by this application.
  */
-public enum RecordType {
-    A(1), NS(2), CNAME(5), SOA(6), MX(15), AAAA(28), OTHER(0);
+public enum RecordClass {
+    IN(1), CS(2), CH(3), HS(4), OTHER(0);
 
     private int code;
 
-    RecordType(int code) {
+    RecordClass(int code) {
         this.code = code;
     }
 
@@ -22,10 +21,10 @@ public enum RecordType {
      * @param code The record type code to be searched.
      * @return A record type that uses the specified code, or OTHER if no record type uses the code.
      */
-    public static RecordType getByCode(int code) {
-        for (RecordType type : values())
-            if (type.code == code)
-                return type;
+    public static RecordClass getByCode(int code) {
+        for (RecordClass rs : values())
+            if (rs.code == code)
+                return rs;
         return OTHER;
     }
 }

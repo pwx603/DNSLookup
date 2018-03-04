@@ -1,10 +1,7 @@
 package ca.ubc.cs.cs317.dnslookup;
 
 import java.io.Console;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.*;
 
 public class DNSLookupService {
@@ -174,6 +171,16 @@ public class DNSLookupService {
             System.err.println("Maximum number of indirection levels reached.");
             return Collections.emptySet();
         }
+        //try{
+
+            //socket.send(new DatagramPacket(bytes, bytes.length, server, 53));
+            //InetAddress server = InetAddress.getByName(node.getHostName());
+            retrieveResultsFromServer(node, rootServer);
+        //}catch(UnknownHostException e){
+           // System.err.println("Unknown Host Exception");
+        //}
+
+
 
         // TODO To be completed by the student
 
@@ -189,8 +196,10 @@ public class DNSLookupService {
      * @param server Address of the server to be used for the query.
      */
     private static void retrieveResultsFromServer(DNSNode node, InetAddress server) {
-
+        ResourceRecord temp = new ResourceRecord(node.getHostName(), node.getType(), 1, server);
+        cache.addResult(temp);
         // TODO To be completed by the student
+
     }
 
     private static void verbosePrintResourceRecord(ResourceRecord record, int rtype) {
