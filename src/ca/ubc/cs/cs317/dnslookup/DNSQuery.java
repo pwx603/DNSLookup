@@ -1,24 +1,67 @@
 package ca.ubc.cs.cs317.dnslookup;
-public class DNSQuery {
-    private int queryId;
-    private int flags;
-    private int qdCount;
-    private int anCount;
-    private int nsCount;
-    private int arCount;
-    private Question question;
+
+import java.io.*;
+
+public class DNSQuery{
+    protected int queryId;
+    protected int qr;
+    protected int opCode;
+    protected int aa;
+    protected int tc;
+    protected int rd;
+    protected int ra;
+    protected int z;
+    protected int rcode;
+    protected int qdCount;
+    protected int anCount;
+    protected int nsCount;
+    protected int arCount;
+    protected Question question;
+
+    protected DNSQuery(){
+    }
 
     public DNSQuery(String hostName, RecordType type, int queryId){
         question = new Question(hostName, type);
         this.queryId = queryId;
-        qdCount++;
+        qdCount = 1;
     }
 
-    public String getHexString(){
-        StringBuilder sb = new StringBuilder();
-        return sb.append(Util.intTo2ByteHex(queryId)).append(Util.intTo2ByteHex(flags))
-                .append(Util.intTo2ByteHex(qdCount)).append(Util.intTo2ByteHex(anCount))
-                .append(Util.intTo2ByteHex(nsCount)).append(Util.intTo2ByteHex(arCount))
-                .append(question.getHexString()).toString();
+    private int getFlag(){
+        return (qr << 15) ^ (opCode << 11) ^ (aa << 10) ^ (tc << 9) ^ (rd << 8) 
+                ^ (ra << 7) ^ (z << 4) ^ (rcode);
+
+    }
+
+    public byte[] getBytes(){
+        try{
+            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+            DataOutputStream dataOut = new DataOutputStream(byteOut);
+    
+            dataOut.writeShort(queryId);
+            dataOut.writeShort(getFlag());
+            dataOut.writeShort(qdCount);
+            dataOut.writeShort(anCount);
+            dataOut.writeShort(nsCount);
+            dataOut.writeShort(arCount);
+            dataOut.write(question.getBytes());
+
+            return byteOut.toByteArray();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return  new byte[]{};
+    }
+
+    public int getQueryId() {
+        return queryId;
+    }
+
+    public String getQName(){
+        return question.getQName();
+    }
+
+    public RecordType getQType(){
+        return question.getQType();
     }
 }

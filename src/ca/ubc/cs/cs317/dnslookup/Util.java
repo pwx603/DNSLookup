@@ -1,5 +1,6 @@
-
 package ca.ubc.cs.cs317.dnslookup;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -7,15 +8,10 @@ public class Util{
 
     public static void main(String[] args){
         String url = "www.ugrad.cs.ubc.ca";
-
         //translateHostNameToHex(url);
         String s = "037777770575677261640263730375626302636100";
 
-        byte[] bytes = hexStringToByteArray(s);
-        for(byte b: bytes){
-            System.out.printf("%hhx",b);
-        }
-
+        translateHostNameToHex(url);
 
     }
 
@@ -26,18 +22,15 @@ public class Util{
         
         for(String arg : hostNameArgs){
             char[] chars = arg.toCharArray();
-
             sb.append(String.format("%02x", chars.length));
             for(char c: chars){
                 sb.append(String.format("%02x", (int)c));
             }
         }
         sb.append("00");
-
         
         return sb.toString();
     }
-
 
     public static String intToByteHex (int i){
         return String.format("%02X", i);
@@ -56,10 +49,8 @@ public class Util{
         }
         return data;
     }
-
 }
 
 //03 77 77 77 05 75 67 72 61 64 02 63 73 03 75 62
 //63 02 63 61 00
-
 

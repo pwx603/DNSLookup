@@ -1,4 +1,5 @@
 package ca.ubc.cs.cs317.dnslookup;
+
 /** Record types supported by the application. Includes a few common record types that are not
  * fully supported by this application.
  */

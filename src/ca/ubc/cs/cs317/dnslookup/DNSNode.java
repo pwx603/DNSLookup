@@ -1,4 +1,5 @@
 package ca.ubc.cs.cs317.dnslookup;
+
 import java.io.Serializable;
 
 /** DNS nodes can be used to specify an individual DNS query or the key to a specific result.
