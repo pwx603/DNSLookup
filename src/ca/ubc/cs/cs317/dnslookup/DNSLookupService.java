@@ -19,7 +19,7 @@ public class DNSLookupService {
     private static DNSCache cache = DNSCache.getInstance();
 
     private static Random random = new Random();
-    final static int MAX_QUERY_ID = 6000;
+    final static int MAX_QUERY_ID = 6000; //Todo: need to be fix
 
     /**
      * Main function, called when program is first invoked.
@@ -205,44 +205,48 @@ public class DNSLookupService {
      */
     private static void retrieveResultsFromServer(DNSNode node, InetAddress server) {
 
-        System.out.println("inside retrieve results");
         // TODO To be completed by the student
         if(cache.getCachedResults(node).isEmpty()){
 
-            System.out.println("empty");
-        }
+            DNSQuery query = new DNSQuery(node.getHostName(), node.getType(), getQueryId());
 
-        DNSQuery query = new DNSQuery(node.getHostName(), node.getType(), getQueryId());
+            System.out.println("Query Name: " + node.getHostName());
+            System.out.println("Query Address " + server.getHostName());
 
-        DNSResponse response = UDPConnection.connect(query, server);
+            DNSResponse response = UDPConnection.connect(query, server);
 
-        System.out.print(response.getArCount());
+            cacheAllResultsFromResponse(response);
 
-        cacheAllResultsFromResponse(response);
+            if(verboseTracing){
+                printVerboseEachQuery(query, response, server);
+            }
 
-        if(verboseTracing){
-            printVerboseEachQuery(query, response, server);
-        }
+            if(response.getAuthoritative()){
+                System.out.println( "Authorized");
+                return;
+            }else{
+                ResourceRecord firstNS = response.getNameServers().getFirst();
+                DNSNode nsNode = new DNSNode(firstNS.getHostName(), RecordType.NS);
+                Set<ResourceRecord> nsRecord = cache.getCachedResults(nsNode);
 
-        System.out.println(response.getAuthoritative());
+                for(ResourceRecord ns: nsRecord){
+                    DNSNode ar = new DNSNode(ns.getTextResult(), RecordType.A);
+                    Set<ResourceRecord> arRecord = cache.getCachedResults(ar);
+                    for(ResourceRecord rr: arRecord){
+                        System.out.println("host adress: " + rr.getInetResult().getHostAddress());
+                        System.out.println("host name: " + rr.getInetResult().getHostName());
+                        retrieveResultsFromServer(node, rr.getInetResult());
+                        break;
+                        //System.out.println("");
 
-
-
-        if(!response.getAuthoritative()){
-            ResourceRecord firstNS = response.getNameServers().getFirst();
-            DNSNode nsNode = new DNSNode(firstNS.getHostName(), RecordType.NS);
-            Set<ResourceRecord> nsRecord = cache.getCachedResults(nsNode);
-
-            for(ResourceRecord ns: nsRecord){
-                DNSNode ar = new DNSNode(ns.getTextResult(), RecordType.A);
-                Set<ResourceRecord> arRecord = cache.getCachedResults(ar);
-                for(ResourceRecord rr: arRecord){
-                    //System.out.println(rr.getInetResult().getHostAddress());
-                    retrieveResultsFromServer(node, rr.getInetResult());
-
+                    }
+                    break;
                 }
             }
+
         }
+
+        System.out.println("reached the end of line");
 
     }
 
@@ -317,70 +321,19 @@ public class DNSLookupService {
             cache.addResult(rr);
         }
 
+        System.out.println("THe amoutn of anserw: " + answers.size());
+
         for(ResourceRecord rr: nameServers){
             cache.addResult(rr);
         }
+
+        System.out.println("THe amoutn of nameServers: " + answers.size());
+
         for(ResourceRecord rr: additionalRecords){
             cache.addResult(rr);
         }
 
+        System.out.println("THe amoutn of additonal: " + answers.size());
+
     }
-
-/*    private static void test(){
-        try{
-            cache.addResult(new ResourceRecord("ca", RecordType.NS, 172800, "c.ca-servers.ca"));
-            cache.addResult(new ResourceRecord("ca", RecordType.NS, 172800, "d.ca-servers.ca"));
-            cache.addResult(new ResourceRecord("ca", RecordType.NS, 172800, "j.ca-servers.ca"));
-            cache.addResult(new ResourceRecord("ca", RecordType.NS, 172800, "any.ca-servers.ca"));
-
-            cache.addResult(new ResourceRecord("c.ca-servers.ca", RecordType.A, 172800, "185.159.196.2"));
-            cache.addResult(new ResourceRecord("d.ca-servers.ca", RecordType.A, 172800, "199.19.4.1"));
-            cache.addResult(new ResourceRecord("j.ca-servers.ca", RecordType.A, 172800, "198.182.167.1"));
-            cache.addResult(new ResourceRecord("any.ca-servers.ca", RecordType.A, 172800, "199.4.144.2"));
-
-            cache.addResult(new ResourceRecord("c.ca-servers.ca", RecordType.AAAA, 172800, "2620:10a:8053:0:0:0:0:2"));
-            cache.addResult(new ResourceRecord("d.ca-servers.ca", RecordType.AAAA, 172800, "2001:500:97:0:0:0:0:1"));
-            cache.addResult(new ResourceRecord("j.ca-servers.ca", RecordType.AAAA, 172800, "2001:500:83:0:0:0:0:1"));
-            cache.addResult(new ResourceRecord("any.ca-servers.ca", RecordType.AAAA, 172800, "2001:500:a7:0:0:0:0:2"));
-
-            cache.addResult(new ResourceRecord("ubc.ca", RecordType.NS, 86400, "hub.ubc.ca"));
-            cache.addResult(new ResourceRecord("ubc.ca", RecordType.NS, 86400, "dns3.ubc.ca"));
-            cache.addResult(new ResourceRecord("ubc.ca", RecordType.NS, 86400, "nightbird.eis.utoronto.ca"));
-
-            cache.addResult(new ResourceRecord("hub.ubc.ca", RecordType.A, 86400, "137.82.1.1"));
-            cache.addResult(new ResourceRecord("dns3.ubc.ca", RecordType.A, 86400, "142.103.1.1"));
-            cache.addResult(new ResourceRecord("nightbird.eis.utoronto.ca", RecordType.A, 86400, "128.100.72.90"));
-
-            cache.addResult(new ResourceRecord("cs.ubc.ca", RecordType.NS, 86400, "temp120.cs.ubc.ca"));
-            cache.addResult(new ResourceRecord("cs.ubc.ca", RecordType.NS, 86400, "fs1.ugrad.cs.ubc.ca"));
-            cache.addResult(new ResourceRecord("cs.ubc.ca", RecordType.NS, 86400, "ns1.cs.ubc.ca"));
-
-            cache.addResult(new ResourceRecord("ns1.cs.ubc.ca", RecordType.A, 86400, "142.103.6.6"));
-            cache.addResult(new ResourceRecord("fs1.ugrad.cs.ubc.ca", RecordType.A, 86400, "198.162.35.1"));
-            cache.addResult(new ResourceRecord("temp120.cs.ubc.ca", RecordType.A, 86400, "137.82.61.120"));
-
-            cache.addResult(new ResourceRecord("www.cs.ubc.ca", RecordType.A, 3600, "142.103.6.5"));
-
-            cache.addResult(new ResourceRecord("cs.ubc.ca", RecordType.NS, 3600, "fs1.ugrad.cs.ubc.ca"));
-            cache.addResult(new ResourceRecord("cs.ubc.ca", RecordType.NS, 3600, "ns1.cs.ubc.ca"));
-
-            cache.addResult(new ResourceRecord("fs1.ugrad.cs.ubc.ca", RecordType.A, 3600, InetAddress.getByName("198.162.35.1")));
-            cache.addResult(new ResourceRecord("ns1.cs.ubc.ca", RecordType.A, 3600, InetAddress.getByName("142.103.6.6")));
-
-            Set<ResourceRecord> results = cache.getCachedResults(new DNSNode("www.cs.ubc.ca", RecordType.A));
-
-            printResults(new DNSNode("www.cs.ubc.ca", RecordType.A), results);
-
-            System.out.println("Data is loaded");
-
-
-            cache.forEachRecord(DNSLookupService::printVerboseEachResult);
-
-        }catch (Exception e){
-            System.out.println(e.toString());
-        }*/
-
-    //}
-
-
 }

@@ -41,6 +41,9 @@ public class DNSResponse extends DNSQuery{
             while((dataInput.available() != 0) && dataInput.readUnsignedByte() == 0xc0){
                 String name = getURL(dataInput.readUnsignedByte());
                 RecordType type = RecordType.getByCode(dataInput.readShort());
+
+                //System.out.println("The type is: " + type.getCode());
+
                 RecordClass cl = RecordClass.getByCode(dataInput.readShort());
                 long ttl = dataInput.readInt();
                 int dataLen = dataInput.readUnsignedShort();
@@ -51,6 +54,12 @@ public class DNSResponse extends DNSQuery{
                     case NS:
                         textResult = getURL(dataInput);
                         break;
+                    case SOA:
+                        textResult = "----";
+                        break;
+                    case CNAME:
+                        textResult = getURL(dataInput);
+                        break;
                     default:
                         inetResult = InetAddress.getByName(getResult(dataInput, dataLen));
                         break;
@@ -58,7 +67,10 @@ public class DNSResponse extends DNSQuery{
 
 
                 if(anCountDown != 0){
-                    answers.add(new ResourceRecord(name,type,ttl, inetResult));
+                    if(type == RecordType.CNAME){
+                        answers.add(new ResourceRecord(name,type,ttl, textResult));
+                    }else{
+                        answers.add(new ResourceRecord(name,type,ttl, inetResult));}
                     anCountDown--;
                     continue;
                 }
@@ -70,11 +82,14 @@ public class DNSResponse extends DNSQuery{
                 }
 
                 if(arCountDown != 0){
-                    additionalRecords.add(new ResourceRecord(name,type,ttl, inetResult));
+                    if(type == RecordType.CNAME){
+                        additionalRecords.add(new ResourceRecord(name,type,ttl, textResult));
+                    }else{
+                        additionalRecords.add(new ResourceRecord(name,type,ttl, inetResult));}
                     arCountDown--;
                     continue;
                 }
-                break;
+
             }
             
         }catch(IOException e){
@@ -142,6 +157,10 @@ public class DNSResponse extends DNSQuery{
                 sb.append(':');
                 sb.append(Integer.toHexString(dataInput.readUnsignedShort()));
             }
+        }else if(dataLen == 2){
+            if(dataInput.readUnsignedByte() == 0xc0){
+                sb.append(getURL(dataInput.readUnsignedByte()));
+            }
         }else{
             sb.append(dataInput.readUnsignedByte());
             for(int i = 0; i < dataLen -1; i++){
@@ -153,6 +172,7 @@ public class DNSResponse extends DNSQuery{
 
         return sb.toString();
     }
+
 
     @Override
     public int getQueryId() {
