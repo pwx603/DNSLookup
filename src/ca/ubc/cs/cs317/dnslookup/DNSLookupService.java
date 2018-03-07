@@ -19,7 +19,7 @@ public class DNSLookupService {
     private static DNSCache cache = DNSCache.getInstance();
 
     private static Random random = new Random();
-    final static int MAX_QUERY_ID = 6000; //Todo: need to be fix
+    final static int MAX_QUERY_ID = 0x00FFFF + 1;
 
     /**
      * Main function, called when program is first invoked.
@@ -210,9 +210,6 @@ public class DNSLookupService {
 
             DNSQuery query = new DNSQuery(node.getHostName(), node.getType(), getQueryId());
 
-            System.out.println("Query Name: " + node.getHostName());
-            System.out.println("Query Address " + server.getHostName());
-
             DNSResponse response = UDPConnection.connect(query, server);
 
             cacheAllResultsFromResponse(response);
@@ -222,7 +219,10 @@ public class DNSLookupService {
             }
 
             if(response.getAuthoritative()){
-                System.out.println( "Authorized");
+                ResourceRecord answer = response.getAnswers().getFirst();
+                if(answer.getType() == RecordType.CNAME){
+                    retrieveResultsFromServer(new DNSNode(answer.getTextResult(), RecordType.A), rootServer); //Todo implement indrectionlevel
+                }
                 return;
             }else{
                 ResourceRecord firstNS = response.getNameServers().getFirst();
@@ -232,12 +232,12 @@ public class DNSLookupService {
                 for(ResourceRecord ns: nsRecord){
                     DNSNode ar = new DNSNode(ns.getTextResult(), RecordType.A);
                     Set<ResourceRecord> arRecord = cache.getCachedResults(ar);
+                    if(arRecord.isEmpty()){
+                        continue;
+                    }
                     for(ResourceRecord rr: arRecord){
-                        System.out.println("host adress: " + rr.getInetResult().getHostAddress());
-                        System.out.println("host name: " + rr.getInetResult().getHostName());
                         retrieveResultsFromServer(node, rr.getInetResult());
                         break;
-                        //System.out.println("");
 
                     }
                     break;
@@ -245,8 +245,6 @@ public class DNSLookupService {
             }
 
         }
-
-        System.out.println("reached the end of line");
 
     }
 
@@ -321,19 +319,14 @@ public class DNSLookupService {
             cache.addResult(rr);
         }
 
-        System.out.println("THe amoutn of anserw: " + answers.size());
-
         for(ResourceRecord rr: nameServers){
             cache.addResult(rr);
         }
-
-        System.out.println("THe amoutn of nameServers: " + answers.size());
 
         for(ResourceRecord rr: additionalRecords){
             cache.addResult(rr);
         }
 
-        System.out.println("THe amoutn of additonal: " + answers.size());
 
     }
 }
